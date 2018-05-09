@@ -1,101 +1,183 @@
-var gulp = require('gulp');
-var browserSync = require('browser-sync').create();
-var reload = browserSync.reload;
-var plumber = require('gulp-plumber');
-var rename = require('gulp-rename');
-var sourcemaps = require('gulp-sourcemaps');
-var sass = require('gulp-sass');
-var autoPrefixer = require('gulp-autoprefixer');
-//if node version is lower than v.0.1.2
-require('es6-promise').polyfill();
-var cssComb = require('gulp-csscomb');
-var cleanCss = require('gulp-clean-css');
-var babel = require('gulp-babel');
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var imageMin = require('gulp-imagemin');
-var cache = require('gulp-cache');
-var notify = require('gulp-notify');
+'use strict';
 
-gulp.task('sass',function(){
-    gulp.src(['src/styles/**/*.scss'])
-        .pipe(plumber({
-            handleError: function (err) {
-                console.log(err);
-                this.emit('end');
-            }
-        }))
-        .pipe(sourcemaps.init())
-        .pipe(sass())
-        .pipe(autoPrefixer())
-        .pipe(cssComb())
-        .pipe(concat('style.css'))
-        .pipe(gulp.dest('dist/styles'))
-        .pipe(rename({
-            suffix: '.min'
-        }))
-        .pipe(cleanCss())
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest('dist/styles'))
-        .pipe(reload({stream:true}))
-        .pipe(notify('css task finished'))
+var gulp = require('gulp'),
+    //Server
+    browserSync = require("browser-sync"),
+    reload = browserSync.reload,
+    ngrok = require('ngrok'),
+    //Images
+    imagemin = require('gulp-imagemin'),
+    pngquant = require('imagemin-pngquant'),
+    spritesmith = require('gulp.spritesmith'),
+    //CSS
+    prefixer = require('gulp-autoprefixer'),
+    sass = require('gulp-sass'),
+    uglify = require('gulp-uglify'),
+    //Other
+    concat = require('gulp-concat'),
+    sourcemaps = require('gulp-sourcemaps'),
+    rigger = require('gulp-rigger'),
+    rimraf = require('rimraf'),
+    watch = require('gulp-watch');
+
+
+//=================================================================
+
+
+var path = {
+    build: {
+        html: 'public/',
+        js: 'public/js/',
+        css: 'public/css/',
+        img: 'public/images/',
+        fonts: 'public/fonts/'
+    },
+    src: {
+        html: 'src/**/*.html',
+        jsMain: ['src/js/*.js'],
+        style: 'src/css/*.scss',
+        img: 'src/images/*.*',
+        spritesStyle: 'src/css/',
+        sprites: 'src/images/sprites/*.*',
+        fonts: 'src/fonts/**/*.*'
+    },
+    watch: {
+        html: 'src/**/*.html',
+        js: 'src/js/**/*.js',
+        style: 'src/css/**/*.scss',
+        img: 'src/images/*.*',
+        sprites: 'src/images/sprites/*.*',
+        fonts: 'src/fonts/**/*.*'
+    },
+    clean: './public'
+};
+
+gulp.task('webserver', function () {
+    browserSync({
+        server: "./public"
+    }, function (err, bs) {
+        ngrok.connect(bs.options.get('port'), function (err, url) {
+        });
+    });
 });
 
-gulp.task('babel',function(){
-    gulp.src(['src/js/**/*.js'])
-        .pipe(plumber({
-            handleError: function (err) {
-                console.log(err);
-                this.emit('end');
-            }
+gulp.task('clean', function (cb) {
+    rimraf(path.clean, cb);
+});
+
+gulp.task('sprites:build', function () {
+    var spritesData = gulp.src(path.src.sprites)
+        .pipe(spritesmith({
+            imgName: '../images/sprites.png',
+            cssName: '_sprites.scss',
+            cssFormat: 'scss',
+            algorithm: 'binary-tree',
+            /*cssVarMap: function(sprites) {
+             sprites.name = 's-' + sprites.name
+             }*/
+        }));
+
+    spritesData.img.pipe(gulp.dest(path.build.img));
+    spritesData.css.pipe(gulp.dest(path.src.spritesStyle));
+});
+
+gulp.task('image:build', function () {
+    return gulp.src(path.src.img)
+        .pipe(imagemin({
+            progressive: true,
+            svgoPlugins: [{removeViewBox: false}],
+            use: [pngquant()],
+            interlaced: true
         }))
+        .pipe(gulp.dest(path.build.img))
+        .pipe(reload({stream: true}));
+});
+
+gulp.task('fonts:build', function () {
+    return gulp.src(path.src.fonts)
+        .pipe(gulp.dest(path.build.fonts))
+});
+
+gulp.task('html:build', function () {
+    return gulp.src(path.src.html)
+        .pipe(rigger())
+        .pipe(gulp.dest(path.build.html))
+        .pipe(reload({stream: true}));
+});
+
+gulp.task('js:build', function () {
+    return gulp.src(path.src.jsMain)
+        .pipe(rigger())
         .pipe(sourcemaps.init())
-        .pipe(babel())
-        .pipe(concat('script.js'))
-        .pipe(gulp.dest('dist/js'))
-        .pipe(rename({
-            suffix: '.min'
-        }))
+        .pipe(concat('script.min.js'))
         .pipe(uglify())
         .pipe(sourcemaps.write())
-        .pipe(gulp.dest('dist/js'))
-        .pipe(reload({stream:true}))
-        .pipe(notify('js task finished'))
+        .pipe(gulp.dest(path.build.js))
+        .pipe(reload({stream: true}));
 });
 
-gulp.task('html',function(){
-    gulp.src(['src/**/*.html'])
-        .pipe(plumber({
-            handleError: function (err) {
-                console.log(err);
-                this.emit('end');
-            }
+gulp.task('style:build', function () {
+    return gulp.src(path.src.style)
+        .pipe(sourcemaps.init())
+        .pipe(sass({
+            includePaths: ['src/css/'],
+            outputStyle: 'compressed',
+            sourceMap: true
+        }).on('error', sass.logError))
+        .pipe(prefixer())
+        .pipe(sourcemaps.write())
+        .pipe(concat('style.min.css'))
+        .pipe(gulp.dest(path.build.css))
+        .pipe(reload({stream: true}));
+});
+
+gulp.task('concatPlug:css', function () {
+    return gulp.src([])
+        .pipe(concat('components.min.css'))
+        .pipe(gulp.dest(path.build.css));
+});
+
+gulp.task('concatPlug:js', function () {
+    return gulp.src([
+        'bower_components/angular/angular.js'
+    ])
+        .pipe(concat('components.min.js'))
+        .pipe(uglify().on('error', function (e) {
+            console.log(e);
         }))
-        .pipe(gulp.dest('dist'))
-        .pipe(reload())
-        .pipe(notify('html task finished'))
+        .pipe(gulp.dest(path.build.js));
 });
 
-gulp.task('image',function(){
-    gulp.src(['src/img/**/*'])
-        .pipe(plumber({
-            handleError: function (err) {
-                console.log(err);
-                this.emit('end');
-            }
-        }))
-        .pipe(cache(imageMin()))
-        .pipe(gulp.dest('dist/img'))
-        .pipe(reload())
-        .pipe(notify('image task finished'))
-});
+gulp.task('build', [
+    'html:build',
+    'js:build',
+    'style:build',
+    'fonts:build',
+    'sprites:build',
+    'image:build',
+    'concatPlug:css',
+    'concatPlug:js'
+]);
 
-gulp.task('default',function(){
-    browserSync.init({
-        server: "./dist"
+gulp.task('watch', function () {
+    watch([path.watch.html], function (event, cb) {
+        gulp.start('html:build');
     });
-    gulp.watch('src/js/**/*.js',['babel']);
-    gulp.watch('src/styles/**/*.scss',['sass']);
-    gulp.watch('src/img/**/*',['image']);
-    gulp.watch('src/**/*.html',['html']);
+    watch([path.watch.style], function (event, cb) {
+        gulp.start('style:build');
+    });
+    watch([path.watch.js], function (event, cb) {
+        gulp.start('js:build');
+    });
+    watch([path.watch.sprites], function (event, cb) {
+        gulp.start('sprites:build');
+    });
+    watch([path.watch.img], function (event, cb) {
+        gulp.start('image:build');
+    });
+    watch([path.watch.fonts], function (event, cb) {
+        gulp.start('fonts:build');
+    });
 });
+
+gulp.task('default', ['build', 'server', 'watch']);

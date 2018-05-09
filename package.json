@@ -1,29 +1,30 @@
 {
-  "name": "seadoc",
-  "version": "1.1.0",
+  "name": "oleg",
+  "version": "1.0.1",
   "description": "",
-  "author": "steelydylan",
-  "license": "MIT License",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
   "devDependencies": {
-    "gulp": "*",
-    "gulp-plumber": "*",
-    "gulp-rename": "*",
-    "gulp-sourcemaps": "*",
-    "gulp-sass": "*",
-    "gulp-autoprefixer": "*",
-    "es6-promise": "*",
-    "gulp-csscomb": "*",
-    "gulp-clean-css": "*",
-    "gulp-babel": "*",
-    "gulp-uglify": "*",
-    "gulp-concat": "*",
-    "gulp-jade": "*",
-    "gulp-imagemin": "*",
-    "gulp-cache": "*",
+    "autoprefixer": "*",
     "browser-sync": "*",
-    "gulp-notify": "*"
+    "gifsicle": "*",
+    "gulp": "*",
+    "gulp-autoprefixer": "*",
+    "gulp-concat": "*",
+    "gulp-imagemin": "*",
+    "gulp-rigger": "*",
+    "gulp-sass": "*",
+    "gulp-sourcemaps": "*",
+    "gulp-uglify": "*",
+    "gulp-watch": "*",
+    "gulp.spritesmith": "*",
+    "imagemin-pngquant": "*",
+    "rigger": "*",
+    "rimraf": "*"
   },
   "dependencies": {
-    "babel-core": "^6.26.3"
+    "ngrok": "^3.0.1"
   }
 }
