@@ -1,0 +1,29 @@
+{
+  "name": "seadoc",
+  "version": "1.1.0",
+  "description": "",
+  "author": "steelydylan",
+  "license": "MIT License",
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-plumber": "*",
+    "gulp-rename": "*",
+    "gulp-sourcemaps": "*",
+    "gulp-sass": "*",
+    "gulp-autoprefixer": "*",
+    "es6-promise": "*",
+    "gulp-csscomb": "*",
+    "gulp-clean-css": "*",
+    "gulp-babel": "*",
+    "gulp-uglify": "*",
+    "gulp-concat": "*",
+    "gulp-jade": "*",
+    "gulp-imagemin": "*",
+    "gulp-cache": "*",
+    "browser-sync": "*",
+    "gulp-notify": "*"
+  },
+  "dependencies": {
+    "babel-core": "^6.26.3"
+  }
+}
